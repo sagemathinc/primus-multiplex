@@ -5,6 +5,9 @@
 
 Node.JS module that adds mutiplexing to [Primus](https://github.com/primus/primus).
 
+This is a fork of the [unmaintained upstream version](https://www.npmjs.com/package/primus-multiplex) of this package.
+For example, we applied updates to fix security vulnerabilities, and intend to do so periodically going forward.
+
 ## Installation
 
 ```
@@ -16,36 +19,32 @@ $ npm install primus-multiplex
 ### On the Server
 
 ```javascript
-var Primus = require('primus');
-var multiplex = require('primus-multiplex');
-var server = require('http').createServer();
+var Primus = require("primus");
+var multiplex = require("primus-multiplex");
+var server = require("http").createServer();
 
 // primus instance
-var primus = new Primus(server, { transformer: 'sockjs', parser: 'JSON' });
+var primus = new Primus(server, { transformer: "sockjs", parser: "JSON" });
 
 // add multiplex to Primus
-primus.plugin('multiplex', multiplex);
+primus.plugin("multiplex", multiplex);
 
-var news = primus.channel('news');
-news.on('connection', function (spark) {
+var news = primus.channel("news");
+news.on("connection", function (spark) {
+  spark.write("hi from the news channel");
 
-  spark.write('hi from the news channel');
-
-  spark.on('data', function (data) {
+  spark.on("data", function (data) {
     spark.write(data);
   });
-
 });
 
-var sport = primus.channel('sport');
-sport.on('connection', function (spark) {
+var sport = primus.channel("sport");
+sport.on("connection", function (spark) {
+  spark.write("hi from the sport channel");
 
-  spark.write('hi from the sport channel');
-
-  spark.on('data', function (data) {
+  spark.on("data", function (data) {
     spark.write(data);
   });
-
 });
 
 server.listen(8080);
@@ -54,21 +53,21 @@ server.listen(8080);
 ### On the Client
 
 ```javascript
-var primus = Primus.connect('ws://localhost:8080');
+var primus = Primus.connect("ws://localhost:8080");
 
 // Connect to channels
-var news = primus.channel('news');
-var sport = primus.channel('sport');
+var news = primus.channel("news");
+var sport = primus.channel("sport");
 
 // Send message
-news.write('hi news channel');
-sport.write('hi sport channel');
+news.write("hi news channel");
+sport.write("hi sport channel");
 
 // Receive message
-news.on('data', function (msg) {
+news.on("data", function (msg) {
   console.log(msg);
 });
-sport.on('data', function (msg) {
+sport.on("data", function (msg) {
   console.log(msg);
 });
 ```
@@ -82,8 +81,8 @@ sport.on('data', function (msg) {
 Create a new channel on the server.
 
 ```javascript
-var news = primus.channel('news');
-news.on('connection', fn);
+var news = primus.channel("news");
+news.on("connection", fn);
 ```
 
 #### channel.write(message)
@@ -101,7 +100,7 @@ for broadcasting to specific `Sparks`.
 
 ```javascript
 news.forEach(function (spark, id, connections) {
-  spark.write('message');
+  spark.write("message");
 });
 ```
 
@@ -111,7 +110,7 @@ Destroy the channel removing all 'Sparks' and event listeners.
 This will emit a `close` event.
 
 ```javascript
-news.on('connection', function (spark) {
+news.on("connection", function (spark) {
   news.destroy();
 });
 ```
@@ -121,12 +120,12 @@ news.on('connection', function (spark) {
 Triggers when the destroy method is called.
 
 ```javascript
-news.on('connection', function (spark) {
+news.on("connection", function (spark) {
   news.destroy();
 });
 
-news.on('close', function () {
-  console.log('channel was destroyed');
+news.on("close", function () {
+  console.log("channel was destroyed");
 });
 ```
 
@@ -135,7 +134,7 @@ news.on('close', function () {
 End the connection.
 
 ```javascript
-news.on('connection', function (spark) {
+news.on("connection", function (spark) {
   spark.end(fn);
 });
 ```
@@ -147,7 +146,7 @@ news.on('connection', function (spark) {
 Send a message to the server.
 
 ```javascript
-news.write('hi server');
+news.write("hi server");
 ```
 
 #### channel.end()
@@ -155,16 +154,17 @@ news.write('hi server');
 Disconnect from a channel.
 
 ```javascript
-var news = primus.channel('news');
+var news = primus.channel("news");
 news.end();
 ```
 
 #### channel.on('data', fn)
+
 Receive `data` from the server from the corresponding `channel`.
 
 ```javascript
-news.on('data', function(msg) {
-  console.log('Received message from news channel', msg);
+news.on("data", function (msg) {
+  console.log("Received message from news channel", msg);
 });
 ```
 
@@ -178,22 +178,31 @@ Triggers when a connection is subscribed to a channel. Callback will return with
 and its `spark` object.
 
 ```javascript
-primus.on('connection', function(spark) {
-  spark.on('subscribe', function(channel, channelSpark) {
-    console.log('spark %s subscribed to channel %s', channelSpark.id, channel.name);
+primus.on("connection", function (spark) {
+  spark.on("subscribe", function (channel, channelSpark) {
+    console.log(
+      "spark %s subscribed to channel %s",
+      channelSpark.id,
+      channel.name,
+    );
     // do stuff with the channel spark
   });
 });
 ```
+
 #### spark.on('unsubscribe', fn)
 
 Triggers when connection is unsubscribed from a channel. Callback will return the `channel` object
 and its `spark` object.
 
 ```javascript
-primus.on('connection', function(spark) {
-  spark.on('unsubscribe', function(channel, channelSpark) {
-    console.log('spark %s unsubscribed from channel %s', channelSpark.id, channel.name);
+primus.on("connection", function (spark) {
+  spark.on("unsubscribe", function (channel, channelSpark) {
+    console.log(
+      "spark %s unsubscribed from channel %s",
+      channelSpark.id,
+      channel.name,
+    );
     // channel spark is about to die
   });
 });
@@ -206,9 +215,9 @@ Each message consists of an array of four parts: `type` (`Number`), `id` (`Strin
 
 There are three valid message types:
 
- * `Packet#MESSAGE` (`0`)  send a message with `payload` on a `topic`.
- * `Packet#SUBSCRIBE` (`1`) subscribe to a given `topic`.
- * `Packet#UNSUBSCRIBE` (`2`) unsubscribe from a `topic`.
+- `Packet#MESSAGE` (`0`) send a message with `payload` on a `topic`.
+- `Packet#SUBSCRIBE` (`1`) subscribe to a given `topic`.
+- `Packet#UNSUBSCRIBE` (`2`) unsubscribe from a `topic`.
 
 The `topic` identifies a channel registered on the server side.
 The `id` represent a unique connection identifier generated on the client side.
@@ -226,7 +235,7 @@ unsubscribe itself or other party from a topic.
 
 ## Run tests
 
-``` bash
+```bash
 $ make test
 ```
 
@@ -234,15 +243,15 @@ $ make test
 
 This library was inspire by this great post:
 
-* https://www.rabbitmq.com/blog/2012/02/23/how-to-compose-apps-using-websockets/
+- https://www.rabbitmq.com/blog/2012/02/23/how-to-compose-apps-using-websockets/
 
 ## Other plugins
 
 PrimusMultiplex is compatible with the following plugins, check the [examples](https://github.com/cayasso/primus-multiplex/tree/master/examples/node) to see more.
 
- * [primus-rooms](https://github.com/cayasso/primus-rooms)
- * [primus-emitter](https://github.com/cayasso/primus-emitter)
- * [primus-resource](https://github.com/cayasso/primus-resource)
+- [primus-rooms](https://github.com/cayasso/primus-rooms)
+- [primus-emitter](https://github.com/cayasso/primus-emitter)
+- [primus-resource](https://github.com/cayasso/primus-resource)
 
 ## License
 
